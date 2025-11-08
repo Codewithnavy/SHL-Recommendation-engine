@@ -49,6 +49,25 @@ SHL_Assignment/
 └── README.md
 ```
 
+## Quick Start
+
+For detailed setup instructions, see [SETUP.md](SETUP.md).
+
+### Quick Installation
+
+```bash
+git clone https://github.com/Codewithnavy/SHL-Recommendation-engine.git
+cd SHL-Recommendation-engine
+python -m venv venv
+venv\Scripts\activate  # On Windows
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env and add your GOOGLE_API_KEY
+python app/main.py
+```
+
+Visit `http://localhost:8000` to access the web interface.
+
 ## Setup Instructions
 
 ### Prerequisites
@@ -145,14 +164,34 @@ python evaluation/evaluate.py
 
 ## Deployment
 
-The application is deployed on Render/Railway with the following URLs:
-- API Endpoint: [TBD]
-- Web Application: [TBD]
+The application can be deployed to various platforms. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+**Links:**
 - GitHub Repository: https://github.com/Codewithnavy/SHL-Recommendation-engine
+- API Documentation: Available at `/docs` endpoint when running
+- Live Demo: Deploy using the instructions in DEPLOYMENT.md
 
 ## Approach Document
 
-See `APPROACH.md` for detailed methodology and optimization strategies.
+See [APPROACH.md](APPROACH.md) for detailed methodology and optimization strategies.
+
+## Testing
+
+Run the automated API tests:
+
+```bash
+# Start the server first
+python app/main.py
+
+# In another terminal
+python test_api.py
+```
+
+## Additional Documentation
+
+- [SETUP.md](SETUP.md) - Detailed setup instructions
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide for various platforms
+- [APPROACH.md](APPROACH.md) - Technical approach and methodology
 
 ## License
 
