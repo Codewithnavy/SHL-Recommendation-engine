@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
+.env
+.git
+.gitignore
+.vscode
+.idea
+*.log
+.DS_Store
+evaluation/train_evaluation_results.json
+predictions.csv
