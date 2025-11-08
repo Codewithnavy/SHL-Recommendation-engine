@@ -188,16 +188,3 @@ python app/main.py
 python test_api.py
 ```
 
-## Additional Documentation
-
-- [SETUP.md](SETUP.md) - Detailed setup instructions
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide for various platforms
-- [APPROACH.md](APPROACH.md) - Technical approach and methodology
-
-## License
-
-MIT License
-
-## Author
-
-Navneet Singh
