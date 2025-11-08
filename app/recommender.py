@@ -10,11 +10,20 @@ class AssessmentRecommender:
     def __init__(self):
         self.assessments = []
         self.embeddings = []
+        self.api_enabled = False
         self.load_assessments()
         
         # Configure Gemini API
-        if settings.GOOGLE_API_KEY:
-            genai.configure(api_key=settings.GOOGLE_API_KEY)
+        if settings.GOOGLE_API_KEY and settings.GOOGLE_API_KEY.strip():
+            try:
+                genai.configure(api_key=settings.GOOGLE_API_KEY)
+                self.api_enabled = True
+                print("Gemini API configured successfully")
+            except Exception as e:
+                print(f"Warning: Could not configure Gemini API: {e}")
+                print("Falling back to keyword-based recommendations")
+        else:
+            print("Warning: GOOGLE_API_KEY not set. Using keyword-based recommendations.")
         
     def load_assessments(self):
         """Load assessments from JSON file."""
@@ -29,6 +38,9 @@ class AssessmentRecommender:
         """
         Get embedding for text using Gemini API.
         """
+        if not self.api_enabled:
+            return None
+            
         try:
             result = genai.embed_content(
                 model=settings.EMBEDDING_MODEL,
@@ -37,7 +49,8 @@ class AssessmentRecommender:
             )
             return result['embedding']
         except Exception as e:
-            print(f"Error getting embedding: {e}")
+            if self.api_enabled:
+                print(f"Error getting embedding: {e}")
             # Fallback to simple word-based similarity if API fails
             return None
     
@@ -187,30 +200,122 @@ class AssessmentRecommender:
     def keyword_based_recommendations(self, query: str, top_k: int) -> List[Dict]:
         """
         Fallback keyword-based recommendation when embeddings fail.
+        Enhanced with better scoring and relevance matching.
         """
         query_lower = query.lower()
         query_words = set(query_lower.split())
+        
+        # Extract key technical terms
+        tech_keywords = {'java', 'python', 'sql', 'javascript', 'css', 'html', 'selenium', 
+                        'excel', 'tableau', 'data', 'analyst', 'developer', 'engineer',
+                        'testing', 'qa', 'selenium', 'automation', 'programming'}
+        
+        # Extract behavioral keywords
+        behavioral_keywords = {'leadership', 'communication', 'personality', 'behavioral',
+                              'collaborate', 'team', 'management', 'cultural', 'fit',
+                              'interpersonal', 'sales', 'customer', 'service'}
+        
+        # Extract role keywords
+        role_keywords = {'senior', 'junior', 'entry', 'level', 'manager', 'director',
+                        'executive', 'analyst', 'consultant', 'admin', 'assistant'}
         
         scored_assessments = []
         
         for assessment in self.assessments:
             text = self.create_assessment_text(assessment).lower()
             text_words = set(text.split())
+            name_lower = assessment.get('name', '').lower()
+            desc_lower = assessment.get('description', '').lower()
             
-            # Simple word overlap score
+            # Calculate base overlap score
             overlap = len(query_words & text_words)
+            score = overlap
             
-            # Boost score for key matches
-            if any(word in text for word in ['java', 'python', 'sql'] if word in query_lower):
-                overlap += 5
+            # Boost for technical keyword matches
+            tech_matches = query_words & tech_keywords
+            for keyword in tech_matches:
+                if keyword in name_lower:
+                    score += 5
+                elif keyword in desc_lower:
+                    score += 3
+                elif keyword in text:
+                    score += 1
             
-            if overlap > 0:
+            # Boost for behavioral keyword matches
+            behavioral_matches = query_words & behavioral_keywords
+            for keyword in behavioral_matches:
+                if keyword in name_lower:
+                    score += 4
+                elif keyword in desc_lower:
+                    score += 2
+                elif keyword in text:
+                    score += 1
+            
+            # Boost for role matches
+            role_matches = query_words & role_keywords
+            for keyword in role_matches:
+                if keyword in name_lower or keyword in desc_lower:
+                    score += 2
+            
+            # Extract duration from query
+            duration_match = None
+            import re
+            duration_patterns = [
+                r'(\d+)\s*(?:minutes?|mins?)',
+                r'(\d+)\s*(?:hours?|hrs?)',
+                r'(\d+)-(\d+)\s*(?:minutes?|mins?|hours?|hrs?)'
+            ]
+            for pattern in duration_patterns:
+                matches = re.findall(pattern, query_lower)
+                if matches:
+                    if isinstance(matches[0], tuple):
+                        duration_match = int(matches[0][0])
+                    else:
+                        duration_match = int(matches[0])
+                    if 'hour' in pattern:
+                        duration_match *= 60
+                    break
+            
+            # Boost for duration match (within reasonable range)
+            if duration_match:
+                assessment_duration = assessment.get('duration', 60)
+                duration_diff = abs(assessment_duration - duration_match)
+                if duration_diff <= 15:  # Within 15 minutes
+                    score += 3
+                elif duration_diff <= 30:  # Within 30 minutes
+                    score += 1
+            
+            # Boost for test type match
+            test_types = ' '.join(assessment.get('test_type', [])).lower()
+            if 'knowledge' in query_lower or 'skill' in query_lower or 'technical' in query_lower:
+                if 'knowledge' in test_types or 'skill' in test_types:
+                    score += 3
+            if 'personality' in query_lower or 'behavioral' in query_lower or 'culture' in query_lower:
+                if 'personality' in test_types or 'behavior' in test_types:
+                    score += 3
+            if 'cognitive' in query_lower or 'aptitude' in query_lower:
+                if 'ability' in test_types or 'aptitude' in test_types:
+                    score += 3
+            
+            if score > 0:
                 assessment_copy = assessment.copy()
-                assessment_copy['_score'] = overlap
+                assessment_copy['_score'] = score
                 scored_assessments.append(assessment_copy)
         
         # Sort by score
         scored_assessments.sort(key=lambda x: x['_score'], reverse=True)
+        
+        # Ensure we have at least top_k results
+        if len(scored_assessments) < top_k and len(self.assessments) > 0:
+            # Add remaining assessments with low score
+            existing_urls = {a['url'] for a in scored_assessments}
+            for assessment in self.assessments:
+                if assessment['url'] not in existing_urls:
+                    assessment_copy = assessment.copy()
+                    assessment_copy['_score'] = 0
+                    scored_assessments.append(assessment_copy)
+                    if len(scored_assessments) >= top_k:
+                        break
         
         return scored_assessments[:top_k]
     
