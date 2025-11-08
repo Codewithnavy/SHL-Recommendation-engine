@@ -63,6 +63,7 @@ venv\Scripts\activate  # On Windows
 pip install -r requirements.txt
 cp .env.example .env
 # Edit .env and add your GOOGLE_API_KEY
+python verify_system.py  # Verify everything works
 python app/main.py
 ```
 

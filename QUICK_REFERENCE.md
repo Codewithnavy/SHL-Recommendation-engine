@@ -12,6 +12,14 @@ cp .env.example .env
 # Edit .env and add: GOOGLE_API_KEY=your_key_here
 ```
 
+### Verify Installation
+```bash
+cd c:\Users\navne\SHL_Assignment
+venv\Scripts\activate
+python verify_system.py
+```
+This checks all dependencies, data files, and modules are working correctly.
+
 ### Run Application
 ```bash
 cd c:\Users\navne\SHL_Assignment
