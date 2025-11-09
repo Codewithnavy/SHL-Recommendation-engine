@@ -174,7 +174,7 @@ The application can be deployed to various platforms. See [DEPLOYMENT.md](DEPLOY
 
 ## Approach Document
 
-See [APPROACH.md](APPROACH.md) for detailed methodology and optimization strategies.
+See [APPROACH.md](APPROACH.md) for detailed methodology and strategies.
 
 ## Testing
 
