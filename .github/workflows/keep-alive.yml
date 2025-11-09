@@ -1,0 +1,39 @@
+name: Keep Render Service Alive
+
+on:
+  schedule:
+    # Runs every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+jobs:
+  ping-service:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Ping Health Endpoint
+        run: |
+          echo "Pinging service at: https://shl-recommendation-engine-l6f9.onrender.com"
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://shl-recommendation-engine-l6f9.onrender.com/health)
+          
+          if [ $response -eq 200 ]; then
+            echo "✓ Service is alive (HTTP $response)"
+          else
+            echo "⚠ Service returned HTTP $response"
+            exit 1
+          fi
+      
+      - name: Test Recommend Endpoint
+        run: |
+          echo "Testing /recommend endpoint..."
+          curl -X POST "https://shl-recommendation-engine-l6f9.onrender.com/recommend" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"Java developer"}' \
+            -s -o /dev/null -w "HTTP Status: %{http_code}\n"
+      
+      - name: Log timestamp
+        run: |
+          echo "Keep-alive ping completed at: $(date)"

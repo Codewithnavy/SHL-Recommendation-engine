@@ -1,16 +1,10 @@
-# SHL Assessment Recommendation System - Technical Approach
+# Technical Approach - SHL Assessment Recommender
 
-## Executive Summary
+## Problem Statement
 
-This document outlines the methodology, technology choices, and optimization strategies employed in building an intelligent recommendation system for SHL assessments. The system uses semantic search powered by Google Gemini embeddings to match natural language queries with relevant assessments from the SHL catalog.
+When I started looking at this problem, the main challenge was clear: how do you help someone quickly find the right assessments from a catalog of 200+ options? Hiring managers don't have time to browse through everything, and their requirements are often complex - like needing both technical skills and soft skills evaluation.
 
-## Problem Analysis
-
-Hiring managers face challenges in finding appropriate assessments due to:
-- Large catalog of 200+ assessments across multiple categories
-- Complex job requirements spanning multiple skill domains
-- Need for balanced recommendations (e.g., both technical and behavioral)
-- Time constraints requiring efficient screening
+The tricky part wasn't just matching keywords. A query like "Java developer who can collaborate with business teams" needs assessments from two different domains - technical coding tests AND behavioral/communication assessments. That's where most simple search systems fall short.
 
 ## Solution Architecture
 
